@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+
+option go_package = "github.com/commis/fabric-client-go/grpc/message";
+option java_package = "message_java";
+
+option java_outer_classname = "ChaincodeWrapperProto";
+
+package message;
+
+service ChaincodeService {
+    rpc send (ChaincodeRequest) returns (ResultResponse) {
+    }
+}
+
+message ChaincodeRequest {
+    string chaincode = 1;
+    enum Method {
+        QUERY = 0;
+        INVOKE = 1;
+    }
+    Method method = 2;
+    string operator = 3;
+    string args = 4;
+}
+
+message ResultResponse {
+   int32 code = 1;
+   string data = 2;
+   string message = 3;
+}

@@ -1,0 +1,37 @@
+# Gopkg.toml example
+#
+# Refer to https://golang.github.io/dep/docs/Gopkg.toml.html
+# for detailed Gopkg.toml documentation.
+
+#[prune]
+#  go-tests = true
+#  unused-packages = true
+
+[[constraint]]
+  name = "github.com/valyala/fasthttp"
+  branch = "master"
+
+[[constraint]]
+  name = "github.com/buaazp/fasthttprouter"
+  branch = "master"
+
+[[constraint]]
+  name = "github.com/dgrijalva/jwt-go"
+  branch = "master"
+
+[[constraint]]
+  name = "github.com/patrickmn/go-cache"
+  branch = "master"
+
+[[constraint]]
+  name = "google.golang.org/grpc"
+  branch = "master"
+
+#[[constraint]]
+#  name = "github.com/hyperledger/fabric-sdk-go"
+#  version = "v1.0.0-beta1"
+
+#版本冲突，使用旧版本覆盖工作
+[[override]]
+  name = "github.com/go-kit/kit"
+  version = "0.7.0"
