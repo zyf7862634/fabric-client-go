@@ -1,0 +1,11 @@
+server:
+  port: 12000
+
+swagger:
+  enabled: true
+  title: "Automobile dataPlatForm demo"
+
+blockchain:
+  api:
+    address: http://localhost:8090
+  initFile: /home/developWork/DevProjects/src/github.com/commis/fabric-network/network/crypto-config/data-initial.txt

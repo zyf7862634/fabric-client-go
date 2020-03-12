@@ -15,18 +15,18 @@ service ChaincodeService {
 }
 
 message ChaincodeRequest {
-    string chaincode = 1;
     enum Method {
         QUERY = 0;
         INVOKE = 1;
     }
+    string chaincode = 1;
     Method method = 2;
     string operator = 3;
     string args = 4;
 }
 
 message ResultResponse {
-   int32 code = 1;
-   string data = 2;
-   string message = 3;
+    int32 code = 1;
+    string data = 2;
+    string message = 3;
 }

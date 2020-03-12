@@ -24,12 +24,18 @@ func GetCurrentExeFileDir() string {
 	return dir
 }
 
-func GetArgBytes(jsonArgs string) [][]byte {
+func GetArrayArgBytes(jsonArgs string) [][]byte {
 	data := make([][]byte, 0, 1)
 	array := strings.Split(jsonArgs, ",")
 	for _, v := range array {
 		data = append(data, []byte(v))
 	}
+	return data
+}
+
+func GetJsonArgBytes(jsonArgs string) [][]byte {
+	data := make([][]byte, 0, 1)
+	data = append(data, []byte(jsonArgs))
 	return data
 }
 

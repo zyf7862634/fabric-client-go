@@ -67,9 +67,9 @@ func queryBlockByRange(cli *ledger.Client, target []string, req *cn.HttpRequest)
 	currHeight := resp.(common.BlockchainInfo).Height
 
 	blockSlice := make([][][]byte, 0)
-	if req.JsonArgs != "" && !strings.Contains(req.JsonArgs, "-") {
+	if req.Parameter.Value != "" && !strings.Contains(req.Parameter.Value, "-") {
 		requestOption := ledger.WithTargetEndpoints(target...)
-		for _, id := range strings.Split(req.JsonArgs, ",") {
+		for _, id := range strings.Split(req.Parameter.Value, ",") {
 			blockNumber, _ := strconv.ParseUint(id, 10, 64)
 			if blockNumber >= currHeight {
 				break
@@ -80,7 +80,7 @@ func queryBlockByRange(cli *ledger.Client, target []string, req *cn.HttpRequest)
 			}
 		}
 	} else {
-		if min, max := getBlockRange(req.JsonArgs); min != 0 && max != 0 {
+		if min, max := getBlockRange(req.Parameter.Value); min != 0 && max != 0 {
 			requestOption := ledger.WithTargetEndpoints(target...)
 			for {
 				if min > max || min >= currHeight {
@@ -108,7 +108,7 @@ func QueryTransaction(req *cn.HttpRequest) (interface{}, error) {
 	}
 
 	var target []string
-	resp, err := dbClient.QueryBlockByTxID(fab.TransactionID(req.JsonArgs), ledger.WithTargetEndpoints(target...))
+	resp, err := dbClient.QueryBlockByTxID(fab.TransactionID(req.Parameter.Value), ledger.WithTargetEndpoints(target...))
 	if err != nil {
 		logger.Errorf("failed to query block by txID : %s", err)
 		return nil, err

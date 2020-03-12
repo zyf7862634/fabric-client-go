@@ -5,8 +5,8 @@ build:
 	@./scripts/build.sh
 
 up:
-	@./test/server/bin/start.sh
-	tail -f test/server/logs/server.log
+	@./run/server/start.sh
+	tail -f run/server/logs/server.log
 
 down:
-	@./test/server/bin/stop.sh
+	@./run/server/bin/stop.sh

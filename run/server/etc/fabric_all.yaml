@@ -1,0 +1,194 @@
+version: 1.4.4
+
+client:
+  # The value must be the name of an org defined under "organizations"
+  organization: ca_peerOrg1
+  logging:
+    level: info
+
+  # Root of the MSP directories with keys and certs.
+  cryptoconfig:
+    path: /home/developWork/DevProjects/src/github.com/commis/fabric-network/network/crypto-config
+
+  credentialStore:
+    path: "/tmp/state-store"
+    cryptoStore:
+      path: /tmp/msp
+
+  # BCCSP config for the client. Used by GO SDK.
+  BCCSP:
+    security:
+      enabled: true
+      # SW/GM SHA2/GMSM3
+      default:
+        provider: "SW"
+      hashAlgorithm: "SHA2"
+      softVerify: true
+      level: 256
+
+  # Global configuration for peer, event service and orderer timeouts
+  peer:
+    timeout:
+      connection: 10s
+      queryResponse: 45s
+      executeTxResponse: 30s
+  eventService:
+    timeout:
+      connection: 50s
+      registrationResponse: 50s
+  orderer:
+    timeout:
+      connection: 5s
+      response: 45s
+
+#
+# [Optional]. But most apps would have this section so that channel objects can be constructed
+# based on the content below. If an app is creating channels, then it likely will not need this
+# section.
+#
+channels:
+  mychannel:
+    peers:
+      peer0.org1.example.com:
+        endorsingPeer: true
+        chaincodeQuery: true
+        ledgerQuery: true
+        eventSource: true
+      peer1.org1.example.com:
+        endorsingPeer: false
+        chaincodeQuery: true
+        ledgerQuery: true
+        eventSource: false
+
+      peer0.org2.example.com:
+        endorsingPeer: true
+        chaincodeQuery: true
+        ledgerQuery: true
+        eventSource: true
+      peer1.org2.example.com:
+        endorsingPeer: false
+        chaincodeQuery: true
+        ledgerQuery: true
+        eventSource: false
+
+#
+# list of participating organizations in this network
+#
+organizations:
+  ordererorg:
+    mspid: OrdererMSP
+    cryptoPath: /home/developWork/DevProjects/src/github.com/commis/fabric-network/network/crypto-config/ordererOrganizations/example.com/users/User1@example.com/msp
+
+  Org1:
+    mspid: Org1MSP
+    cryptoPath: /home/developWork/DevProjects/src/github.com/commis/fabric-network/network/crypto-config/peerOrganizations/org1.example.com/users/User1@org1.example.com/msp
+    peers:
+      - peer0.org1.example.com
+      - peer1.org1.example.com
+    certificateAuthorities:
+      - ca_peerOrg1
+
+  Org2:
+    mspid: Org2MSP
+    cryptoPath: /home/developWork/DevProjects/src/github.com/commis/fabric-network/network/crypto-config/peerOrganizations/org2.example.com/users/User1@org2.example.com/msp
+    peers:
+      - peer0.org2.example.com
+      - peer1.org2.example.com
+    certificateAuthorities:
+      - ca_peerOrg2
+#
+# List of orderers to send transaction and channel create/update requests to. For the time
+# being only one orderer is needed. If more than one is defined, which one get used by the
+# SDK is implementation specific. Consult each SDK's documentation for its handling of orderers.
+#
+orderers:
+  orderer.example.com:
+    url: grpc://127.0.0.1:7050
+    grpcOptions:
+      ssl-target-name-override: orderer.example.com
+    tlsCACerts:
+      path: /home/developWork/DevProjects/src/github.com/commis/fabric-network/network/crypto-config/ordererOrganizations/example.com/tlsca/tlsca.example.com-cert.pem
+
+#
+# List of peers to send various requests to, including endorsement, query
+# and event listener registration.
+#
+peers:
+  peer0.org1.example.com:
+    url: grpc://127.0.0.1:7051
+    grpcOptions:
+      ssl-target-name-override: peer0.org1.example.com
+    tlsCACerts:
+      path: /home/developWork/DevProjects/src/github.com/commis/fabric-network/network/crypto-config/peerOrganizations/org1.example.com/users/User1@org1.example.com/tls/ca.crt
+
+  peer1.org1.example.com:
+    url: grpc://127.0.0.1:8051
+    grpcOptions:
+      ssl-target-name-override: peer1.org1.example.com
+    tlsCACerts:
+      path: /home/developWork/DevProjects/src/github.com/commis/fabric-network/network/crypto-config/peerOrganizations/org1.example.com/users/User1@org1.example.com/tls/ca.crt
+
+  peer0.org2.example.com:
+    url: grpc://127.0.0.1:9051
+    grpcOptions:
+      ssl-target-name-override: peer0.org2.example.com
+    tlsCACerts:
+      path: /home/developWork/DevProjects/src/github.com/commis/fabric-network/network/crypto-config/peerOrganizations/org2.example.com/users/User1@org2.example.com/tls/ca.crt
+
+  peer1.org2.example.com:
+    url: grpc://127.0.0.1:10051
+    grpcOptions:
+      ssl-target-name-override: peer1.org2.example.com
+    tlsCACerts:
+      path: /home/developWork/DevProjects/src/github.com/commis/fabric-network/network/crypto-config/peerOrganizations/org2.example.com/users/User1@org2.example.com/tls/ca.crt
+
+#
+# Fabric-CA is a special kind of Certificate Authority provided by Hyperledger Fabric which allows
+# certificate management to be done via REST APIs. Application may choose to use a standard
+# Certificate Authority instead of Fabric-CA, in which case this section would not be specified.
+#
+certificateAuthorities:
+  ca_peerOrg1:
+    url: http://127.0.0.1:7054
+    tlsCACerts:
+      path: /home/developWork/DevProjects/src/github.com/commis/fabric-network/network/crypto-config/peerOrganizations/org1.example.com/tlsca/tlsca.org1.example.com-cert.pem
+      client:
+        key:
+          path: /home/developWork/DevProjects/src/github.com/commis/fabric-network/network/crypto-config/peerOrganizations/org1.example.com/users/User1@org1.example.com/tls/client.key
+        cert:
+          path: /home/developWork/DevProjects/src/github.com/commis/fabric-network/network/crypto-config/peerOrganizations/org1.example.com/users/User1@org1.example.com/tls/client.crt
+    registrar:
+      enrollId: admin
+      enrollSecret: adminpw
+    caName: ca-org1
+
+  ca_peerOrg2:
+    url: http://127.0.0.1:8054
+    tlsCACerts:
+      path: /home/developWork/DevProjects/src/github.com/commis/fabric-network/network/crypto-config/peerOrganizations/org2.example.com/tlsca/tlsca.org2.example.com-cert.pem
+      client:
+        key:
+          path: /home/developWork/DevProjects/src/github.com/commis/fabric-network/network/crypto-config/peerOrganizations/org2.example.com/users/User1@org2.example.com/tls/client.key
+        cert:
+          path: /home/developWork/DevProjects/src/github.com/commis/fabric-network/network/crypto-config/peerOrganizations/org2.example.com/users/User1@org2.example.com/tls/client.crt
+    registrar:
+      enrollId: admin
+      enrollSecret: adminpw
+    caName: ca-org2
+
+entityMatchers:
+  orderer:
+    - pattern: (\w+).example.(\w+)
+      urlSubstitutionExp: grpc://127.0.0.1:7050
+      sslTargetOverrideUrlSubstitutionExp: orderer.example.com
+      mappedHost: orderer.example.com
+  peer:
+    - pattern: (\w+).org1.example.(\w+)
+      urlSubstitutionExp: grpc://127.0.0.1:7051
+      sslTargetOverrideUrlSubstitutionExp: peer0.org1.example.com
+      mappedHost: peer0.org1.example.com
+
+    - pattern: (\w+).org2.example.(\w+)
+      urlSubstitutionExp: grpc://127.0.0.1:9051
+      sslTargetOverrideUrlSubstitutionExp: peer0.org2.example.com
+      mappedHost: peer0.org2.example.com

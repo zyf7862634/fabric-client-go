@@ -12,7 +12,7 @@ func BlockHandler(ctx *fasthttp.RequestCtx) {
 	}
 
 	payload, err := QueryBlock(req)
-	common.ProcessOperateResult(&ctx.Response, payload, err)
+	common.ProcessOperateResult(&ctx.Response, nil, payload, err)
 }
 
 func BlockTxHandler(ctx *fasthttp.RequestCtx) {
@@ -22,5 +22,5 @@ func BlockTxHandler(ctx *fasthttp.RequestCtx) {
 	}
 
 	payload, err := QueryTransaction(req)
-	common.ProcessOperateResult(&ctx.Response, payload, err)
+	common.ProcessOperateResult(&ctx.Response, nil, payload, err)
 }

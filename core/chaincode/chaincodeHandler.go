@@ -6,29 +6,21 @@ import (
 )
 
 func Query(ctx *fasthttp.RequestCtx) {
-	req := &common.HttpRequest{}
-	if err := common.ParseRequestBody(ctx, req); err != nil {
+	req := common.HttpRequest{}
+	if err := common.ParseRequestBody(ctx, &req); err != nil {
 		return
 	}
 
-	payload, err := QueryChainCode(
-		&common.GrpcRequest{
-			ChainCode: &req.ChainCode,
-			Operate:   &req.Operate,
-			JsonArgs:  req.JsonArgs})
-	common.ProcessOperateResult(&ctx.Response, payload, err)
+	payload, err := QueryChainCode(&req)
+	common.ProcessOperateResult(&ctx.Response, nil, payload, err)
 }
 
 func Invoke(ctx *fasthttp.RequestCtx) {
-	req := &common.HttpRequest{}
-	if err := common.ParseRequestBody(ctx, req); err != nil {
+	req := common.HttpRequest{}
+	if err := common.ParseRequestBody(ctx, &req); err != nil {
 		return
 	}
 
-	payload, err := InvokeChainCode(
-		&common.GrpcRequest{
-			ChainCode: &req.ChainCode,
-			Operate:   &req.Operate,
-			JsonArgs:  req.JsonArgs})
-	common.ProcessOperateResult(&ctx.Response, payload, err)
+	txId, payload, err := InvokeChainCode(&req)
+	common.ProcessOperateResult(&ctx.Response, txId, payload, err)
 }

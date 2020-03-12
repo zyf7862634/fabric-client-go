@@ -1,28 +1,30 @@
 package common
 
+import "strings"
+
 type OperateInfo struct {
 	User   string `json:"user,omitempty"`
 	Module string `json:"module,omitempty"`
 	Method string `json:"func"`
 }
 
+type ParamInfo struct {
+	Type  int    `json:"type"` // 参数类别：1 数组、2 JSON
+	Value string `json:"args"` // 实际参数直
+}
+
 type JsonResponse struct {
-	Code    int         `json:"code"`
+	Code    int         `json:"code"` /*返回错误码*/
+	TxID    interface{} `json:"txID"` /*交易Hash*/
 	Data    interface{} `json:"data"`
 	Message interface{} `json:"message"`
 }
 
-type GrpcRequest struct {
-	ChainCode *BlockChain
-	Operate   *OperateInfo
-	JsonArgs  string
-}
-
 type HttpRequest struct {
-	Token     string      `json:"token,omitempty"`
+	Token     string      `json:"token,omitempty"` // 用来Restful服务的鉴权
 	ChainCode BlockChain  `json:"chaincode,omitempty"`
 	Operate   OperateInfo `json:"operator"`
-	JsonArgs  string      `json:"args,omitempty"`
+	Parameter ParamInfo   `json:"p,omitempty"`
 }
 
 type BlockChain struct {
@@ -33,8 +35,15 @@ type BlockChain struct {
 }
 
 func (t *OperateInfo) String() string {
-	//todo::后续正式版本恢复
-	/*data := []string{t.User, t.Module, t.Method}
-	return strings.Join(data, "#")*/
-	return t.Method
+	var data []string
+	if t.User != "" {
+		data = append(data, t.User)
+	}
+	if t.Module != "" {
+		data = append(data, t.Module)
+	}
+	if t.Method != "" {
+		data = append(data, t.Method)
+	}
+	return strings.Join(data, ":")
 }

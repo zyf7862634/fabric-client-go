@@ -14,30 +14,42 @@ type GrpcServer struct {
 }
 
 func (t *GrpcServer) Send(ctx context.Context, in *gm.ChaincodeRequest) (*gm.ResultResponse, error) {
-	var token = ""
 	switch in.GetMethod() {
 	case gm.ChaincodeRequest_QUERY:
-		return t.queryCC(token, in)
-
+		return t.queryCC(in)
 	case gm.ChaincodeRequest_INVOKE:
-		return t.invokeCC(token, in)
+		return t.invokeCC(in)
 	default:
 		return nil, fmt.Errorf("invalid grpc method: %v", in.GetMethod())
 	}
 }
 
-func (t *GrpcServer) queryCC(token string, in *gm.ChaincodeRequest) (*gm.ResultResponse, error) {
+func (t *GrpcServer) getRequest(in *gm.ChaincodeRequest) (*cc.HttpRequest, error) {
 	var oper cc.OperateInfo
 	if err := json.Unmarshal([]byte(in.GetOperator()), &oper); err != nil {
-		return t.setExecuteError(err.Error())
+		return nil, err
 	}
 
 	var blockChain cc.BlockChain
 	if err := json.Unmarshal([]byte(in.GetChaincode()), &blockChain); err != nil {
+		return nil, err
+	}
+
+	var param cc.ParamInfo
+	if err := json.Unmarshal([]byte(in.GetArgs()), &param); err != nil {
+		return nil, err
+	}
+
+	req := &cc.HttpRequest{ChainCode: blockChain, Operate: oper, Parameter: param}
+	return req, nil
+}
+
+func (t *GrpcServer) queryCC(in *gm.ChaincodeRequest) (*gm.ResultResponse, error) {
+	req, err := t.getRequest(in)
+	if err != nil {
 		return t.setExecuteError(err.Error())
 	}
 
-	req := &cc.GrpcRequest{ChainCode: &blockChain, Operate: &oper, JsonArgs: in.GetArgs()}
 	payload, err := chaincode.QueryChainCode(req)
 	if err != nil {
 		return t.setExecuteError(err.Error())
@@ -46,20 +58,13 @@ func (t *GrpcServer) queryCC(token string, in *gm.ChaincodeRequest) (*gm.ResultR
 	return t.setExecuteSuccess(payload)
 }
 
-func (t *GrpcServer) invokeCC(token string, in *gm.ChaincodeRequest) (*gm.ResultResponse, error) {
-	var oper cc.OperateInfo
-
-	if err := json.Unmarshal([]byte(in.GetOperator()), &oper); err != nil {
+func (t *GrpcServer) invokeCC(in *gm.ChaincodeRequest) (*gm.ResultResponse, error) {
+	req, err := t.getRequest(in)
+	if err != nil {
 		return t.setExecuteError(err.Error())
 	}
 
-	var blockChain cc.BlockChain
-	if err := json.Unmarshal([]byte(in.GetChaincode()), &blockChain); err != nil {
-		return t.setExecuteError(err.Error())
-	}
-
-	req := &cc.GrpcRequest{ChainCode: &blockChain, Operate: &oper, JsonArgs: in.GetArgs()}
-	payload, err := chaincode.InvokeChainCode(req)
+	_, payload, err := chaincode.InvokeChainCode(req)
 	if err != nil {
 		return t.setExecuteError(err.Error())
 	}

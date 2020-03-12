@@ -2,6 +2,7 @@ package common
 
 import (
 	"fmt"
+	"github.com/commis/fabric-client-go/utils"
 	"os"
 	"strings"
 	"sync"
@@ -23,8 +24,14 @@ type ServerConfigure struct {
 func GetSvrConfigIns() *ServerConfigure {
 	svrCfgMutex.Do(func() {
 		svrCfg = &ServerConfigure{}
-		//svrCfg.cfgPath = utils.GetCurrentExeFileDir() + "/../etc"
-		svrCfg.cfgPath = "/home/developCode/GoProjects/src/github.com/commis/fabric-client-go/test/server/etc"
+		svrCfg.cfgPath = utils.GetCurrentExeFileDir() + "/etc"
+		_, err := os.Stat(svrCfg.cfgPath)
+		if err != nil {
+			if !os.IsExist(err) {
+				fmt.Println("change dir for develop configure.")
+				svrCfg.cfgPath = "/home/developWork/DevProjects/src/github.com/hyperledger/fabric-client-go/run/server/etc"
+			}
+		}
 		svrCfg.initConfig()
 	})
 	return svrCfg

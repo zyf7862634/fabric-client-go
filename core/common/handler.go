@@ -8,7 +8,7 @@ import (
 )
 
 func Index(ctx *fasthttp.RequestCtx) {
-	WriteSuccessResponse(&ctx.Response, "Welcome")
+	WriteSuccessResponse(&ctx.Response, nil, "Welcome")
 }
 
 func Enroll(ctx *fasthttp.RequestCtx) {
@@ -28,7 +28,7 @@ func Enroll(ctx *fasthttp.RequestCtx) {
 	if !result {
 		WriteFailedResponse(&ctx.Response, StatusExecuteFailed, userCert)
 	} else {
-		WriteSuccessResponse(&ctx.Response, userCert)
+		WriteSuccessResponse(&ctx.Response, nil, userCert)
 	}
 }
 
@@ -43,27 +43,23 @@ func ParseRequestBody(ctx *fasthttp.RequestCtx, req *HttpRequest) error {
 
 	svrCfg := GetSvrConfigIns()
 	if req.ChainCode.Channel == "" || req.ChainCode.ChainCodeName == "" {
-		req.ChainCode.Channel = svrCfg.GetCfgString(FabricOrgChannel)
+		req.ChainCode.Channel = Setup.ChannelID
 		req.ChainCode.ChainCodeName = svrCfg.GetCfgString(FabricChainCodeName)
-	}
-
-	if req.Operate.User == "" {
-		req.Operate.User = svrCfg.GetCfgString(FabricAdminUser)
 	}
 
 	return nil
 }
 
-func ProcessOperateResult(w *fasthttp.Response, payload interface{}, err error) {
+func ProcessOperateResult(w *fasthttp.Response, txId interface{}, payload interface{}, err error) {
 	if err != nil {
 		WriteFailedResponse(w, StatusExecuteFailed, err.Error())
 	} else {
-		WriteSuccessResponse(w, payload)
+		WriteSuccessResponse(w, txId, payload)
 	}
 }
 
-func WriteSuccessResponse(w *fasthttp.Response, m interface{}) {
-	jsonResponse := JsonResponse{Code: StatusExecuteSuccess, Data: m, Message: nil}
+func WriteSuccessResponse(w *fasthttp.Response, txId interface{}, m interface{}) {
+	jsonResponse := JsonResponse{Code: StatusExecuteSuccess, TxID: txId, Data: m, Message: nil}
 
 	if err := json.NewEncoder(w.BodyWriter()).Encode(&jsonResponse); err != nil {
 		WriteFailedResponse(w, StatusInternalServerError, "Internal Server Error")
@@ -73,7 +69,7 @@ func WriteSuccessResponse(w *fasthttp.Response, m interface{}) {
 }
 
 func WriteFailedResponse(w *fasthttp.Response, errorCode int, errorMsg string) {
-	jsonResponse := JsonResponse{Code: errorCode, Data: nil, Message: errorMsg}
+	jsonResponse := JsonResponse{Code: errorCode, TxID: nil, Data: nil, Message: errorMsg}
 
 	if err := json.NewEncoder(w.BodyWriter()).Encode(&jsonResponse); err != nil {
 		logger.Errorf("write error response failed, %v", jsonResponse)

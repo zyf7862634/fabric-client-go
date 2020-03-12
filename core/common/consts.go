@@ -3,15 +3,14 @@ package common
 import "github.com/op/go-logging"
 
 const (
-	FabricCliConfig        = "fabric.yaml"
-	FabricChainCodeName    = "fabric.ccName"
-	FabricOrderer          = "fabric.orderer"
-	FabricOrgName          = "fabric.orgName"
-	FabricOrgChannel       = "fabric.channelName"
-	FabricAffiliation      = "fabric.affiliation"
-	FabricCertCaName       = "fabric.caName"
-	FabricAdminUser        = "Admin"
-	FabricIdentityTypeUser = "user"
+	FabricCliConfig     = "fabric.yaml"
+	FabricChainCodeName = "fabric.ccName"
+	FabricOrgUser       = "fabric.orgUser"
+	FabricOrgName       = "fabric.orgName"
+	FabricOrgChannel    = "fabric.channelName"
+	FabricAffiliation   = "fabric.affiliation"
+	FabricCertCaName    = "fabric.caName"
+	FabricIdentityType  = "user"
 
 	ServerConfig          = "server.yaml"
 	ServerName            = "server.name"
@@ -30,5 +29,5 @@ const (
 const (
 	StatusExecuteSuccess      = 200
 	StatusInternalServerError = 500
-	StatusExecuteFailed       = 1001 //Execute failed
+	StatusExecuteFailed       = 1001 // Execute failed
 )

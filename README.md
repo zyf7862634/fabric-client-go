@@ -1,29 +1,16 @@
-# Install
+## Install
+- mkdir -p $GOPATH/src/github.com/commis
+- cd $GOPATH/src/github.com/commis
+- git clone https://github.com/commis/fabric-client-go.git
 
-mkdir -p $GOPATH/src/github.com/hyperledger
+## Compile
+- cd $GOPATH/src/github.com/commis/fabtic-client-go
+- make build
 
-cd $GOPATH/src/github.com/hyperledger
-
-git clone http://192.168.1.232/blockchain/fabric-sdk-go.git
-
-mkdir -p $GOPATH/src/github.com/commis/fabtic-client-go
-
-git clone http://192.168.1.232/blockchain/fabtic-client-go.git
-
-# Compile
-
-cd $GOPATH/src/github.com/commis/fabtic-client-go
-
-make build
-
-# Running
-
-cd $GOPATH/src/github.com/commis/fabtic-client-go/test/server
-
-./bin/start.sh
+## Running
+- $ cd $GOPATH/src/github.com/commis/fabtic-client-go/run/server
+- ./bin/start.sh or ./httpserver
 
 `Notes:`
-
-    1.Configure your fabric network:
-        test/server/etc/fabric.yaml
-
+- Configure your fabric network:
+  - run/server/etc/fabric.yaml

@@ -1,49 +1,68 @@
 package chaincode
 
 import (
+	"fmt"
 	"github.com/commis/fabric-client-go/core/common"
 	"github.com/commis/fabric-client-go/utils"
+	"github.com/commis/fabric-sdk-go/pkg/client/channel"
+)
 
-	"github.com/hyperledger/fabric-sdk-go/pkg/client/channel"
-	"github.com/hyperledger/fabric-sdk-go/pkg/common/errors/retry"
+const (
+	RequestArgsTypeArray int = 0
+	RequestArgsTypeJson  int = 1
 )
 
 var logger = common.SetupModuleLogger("core.chaincode")
 
-func QueryChainCode(req *common.GrpcRequest) (interface{}, error) {
+func getArgBytes(param *common.ParamInfo) [][]byte {
+	switch param.Type {
+	case RequestArgsTypeArray:
+		return utils.GetArrayArgBytes(param.Value)
+	case RequestArgsTypeJson:
+		return utils.GetJsonArgBytes(param.Value)
+	default:
+	}
+	return nil
+}
+
+func QueryChainCode(req *common.HttpRequest) (interface{}, error) {
 	logger.Debugf("request: %v", *req)
 
 	hfClient := common.GetFabricSetupIns().Client
+	args := getArgBytes(&req.Parameter)
+	if args == nil {
+		return nil, fmt.Errorf("invalid argument type %d when query chaincode", req.Parameter.Type)
+	}
 
-	args := utils.GetArgBytes(req.JsonArgs)
 	request := channel.Request{
 		ChaincodeID: req.ChainCode.ChainCodeName,
 		Fcn:         req.Operate.String(),
 		Args:        args}
-	resp, err := hfClient.Query(request, channel.WithRetry(retry.DefaultChannelOpts))
+	resp, err := hfClient.Query(request)
 	if err != nil {
-		logger.Errorf("failed to query funds : %s", err)
 		return nil, err
 	}
 
 	return string(resp.Payload), nil
 }
 
-func InvokeChainCode(req *common.GrpcRequest) (interface{}, error) {
+func InvokeChainCode(req *common.HttpRequest) (interface{}, interface{}, error) {
 	logger.Debugf("request: %v", *req)
 
 	hfClient := common.GetFabricSetupIns().Client
+	args := getArgBytes(&req.Parameter)
+	if args == nil {
+		return nil, nil, fmt.Errorf("invalid argument type %d when invoke chaincode", req.Parameter.Type)
+	}
 
-	args := utils.GetArgBytes(req.JsonArgs)
 	request := channel.Request{
 		ChaincodeID: req.ChainCode.ChainCodeName,
 		Fcn:         req.Operate.String(),
 		Args:        args}
-	response, err := hfClient.Execute(request, channel.WithRetry(retry.DefaultChannelOpts))
+	response, err := hfClient.Execute(request)
 	if err != nil {
-		logger.Errorf("failed to invoke funds : %s", err)
-		return nil, err
+		return nil, nil, err
 	}
 
-	return response.TransactionID, nil
+	return response.TransactionID, string(response.Payload), nil
 }

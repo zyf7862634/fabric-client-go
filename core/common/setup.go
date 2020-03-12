@@ -4,6 +4,10 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
+	"sort"
+	"strings"
+	"sync"
+
 	"github.com/hyperledger/fabric-sdk-go/pkg/client/channel"
 	"github.com/hyperledger/fabric-sdk-go/pkg/client/msp"
 	"github.com/hyperledger/fabric-sdk-go/pkg/client/resmgmt"
@@ -13,54 +17,49 @@ import (
 	"github.com/hyperledger/fabric-sdk-go/pkg/fab"
 	"github.com/hyperledger/fabric-sdk-go/pkg/fabsdk"
 	"github.com/pkg/errors"
-	"sort"
-	"sync"
 )
 
 var logger = SetupModuleLogger("core.common")
 
 var (
 	setupOnce sync.Once
-	setup     *FabricSetup
+	Setup     *FabricSetup
 )
 
 type FabricSetup struct {
-	//配置文件只有一个
+	// 配置文件只有一个
 	ConfigFile       string
-	OrgAdmin         string
+	OrgUser          string
 	OrgName          string
-	OrgID            string
 	ChannelID        string
-	OrdererEndPoint  string
 	Affiliation      string
 	CertCaName       string
 	IdentityTypeUser string
 
-	Sdk           *fabsdk.FabricSDK //实例化后的sdk
+	Sdk           *fabsdk.FabricSDK // 实例化后的sdk
 	MspClient     *msp.Client
-	resMgmtClient *resmgmt.Client //资源客户端
-	Client        *channel.Client //通道客户端
+	resMgmtClient *resmgmt.Client // 资源客户端
+	Client        *channel.Client // 通道客户端
 }
 
 func GetFabricSetupIns() *FabricSetup {
 	setupOnce.Do(func() {
 		svrCfg := GetSvrConfigIns()
-		setup = &FabricSetup{
+		Setup = &FabricSetup{
 			ConfigFile:       svrCfg.GetCfgFile(FabricCliConfig),
-			OrgAdmin:         FabricAdminUser,
+			OrgUser:          svrCfg.GetCfgString(FabricOrgUser),
 			OrgName:          svrCfg.GetCfgString(FabricOrgName),
 			ChannelID:        svrCfg.GetCfgString(FabricOrgChannel),
-			OrdererEndPoint:  svrCfg.GetCfgString(FabricOrderer),
 			Affiliation:      svrCfg.GetCfgString(FabricAffiliation),
 			CertCaName:       svrCfg.GetCfgString(FabricCertCaName),
-			IdentityTypeUser: FabricIdentityTypeUser,
+			IdentityTypeUser: FabricIdentityType,
 		}
-		setup.setupSDK()
-		setup.setupMspClient()
-		setup.setupResMgmtClient()
-		setup.setupChannelClient()
+		Setup.setupSDK()
+		Setup.setupMspClient()
+		Setup.setupResMgmtClient()
+		Setup.setupChannelClient()
 	})
-	return setup
+	return Setup
 }
 
 func (fs *FabricSetup) GetUserNameFromCert(cert string) (string, error) {
@@ -82,16 +81,16 @@ func (fs *FabricSetup) GetUserNameFromCert(cert string) (string, error) {
 }
 
 func (fs *FabricSetup) RegisteredAndEnrollUser(userName string) (string, bool) {
-	if userName == fs.OrgAdmin {
+	if userName == fs.OrgUser || strings.ToLower(userName) == "admin" {
 		return fs.signingIdentity(userName)
 	}
 
 	// Register the new user
-	enrollmentSecret, err := setup.MspClient.Register(
+	enrollmentSecret, err := Setup.MspClient.Register(
 		&msp.RegistrationRequest{
-			Name:        userName,
-			Type:        fs.IdentityTypeUser,
-			Affiliation: fs.Affiliation,
+			Name:   userName,
+			Type:   fs.IdentityTypeUser,
+			CAName: fs.CertCaName,
 		})
 	// err if user is already enrolled
 	if err == nil {
@@ -102,9 +101,10 @@ func (fs *FabricSetup) RegisteredAndEnrollUser(userName string) (string, bool) {
 		}
 	}
 
-	if err := fs.joinChannel(userName); err != nil {
+	// the new user join to local channel
+	/*if err := fs.joinChannel(userName); err != nil {
 		logger.Errorf("join channel failed: %v", err)
-	}
+	}*/
 
 	return fs.signingIdentity(userName)
 }
@@ -144,7 +144,7 @@ func (fs *FabricSetup) joinChannel(userName string) error {
 	options := []resmgmt.RequestOption{
 		resmgmt.WithRetry(retry.DefaultResMgmtOpts),
 	}
-	if err = resMgmtClient.JoinChannel(setup.ChannelID, options...); err != nil {
+	if err = resMgmtClient.JoinChannel(Setup.ChannelID, options...); err != nil {
 		return err
 	}
 
@@ -157,17 +157,17 @@ func (fs *FabricSetup) setupSDK() {
 		logger.Fatalf("failed to create new SDK: %v", err)
 	}
 	fs.Sdk = sdk
-	logger.Infof("Fabric sdk created")
+	logger.Infof("Fabric sdk created.")
 }
 
 func (fs *FabricSetup) setupResMgmtClient() {
-	options := []fabsdk.ContextOption{fabsdk.WithUser(fs.OrgAdmin), fabsdk.WithOrg(fs.OrgName)}
+	options := []fabsdk.ContextOption{fabsdk.WithUser(fs.OrgUser), fabsdk.WithOrg(fs.OrgName)}
 	resourceManagerClientContext := fs.Sdk.Context(options...)
 	client, err := resmgmt.New(resourceManagerClientContext)
 	if err != nil {
 		logger.Fatalf("fail to create channel management client from Admin identity: %v", err)
 	}
-	setup.resMgmtClient = client
+	Setup.resMgmtClient = client
 	logger.Infof("Resource management client created")
 }
 
@@ -175,11 +175,11 @@ func (fs *FabricSetup) setupMspClient() {
 	ctxProvider := fs.Sdk.Context()
 	fs.MspClient, _ = msp.New(ctxProvider, msp.WithOrg(fs.OrgName))
 
-	/*registrarEnrollID, registrarEnrollSecret := fs.getRegistrarEnrollmentCredentials(ctxProvider)
+	registrarEnrollID, registrarEnrollSecret := fs.getRegistrarEnrollmentCredentials(ctxProvider)
 	err := fs.MspClient.Enroll(registrarEnrollID, msp.WithSecret(registrarEnrollSecret))
 	if err != nil {
 		logger.Fatalf("Error: %v", err)
-	}*/
+	}
 }
 
 func (fs *FabricSetup) getRegistrarEnrollmentCredentials(ctxProvider context.ClientProvider) (string, string) {
@@ -200,7 +200,7 @@ func (fs *FabricSetup) getRegistrarEnrollmentCredentials(ctxProvider context.Cli
 }
 
 func (fs *FabricSetup) setupChannelClient() {
-	options := []fabsdk.ContextOption{fabsdk.WithUser(fs.OrgAdmin), fabsdk.WithOrg(fs.OrgName)}
+	options := []fabsdk.ContextOption{fabsdk.WithUser(fs.OrgUser), fabsdk.WithOrg(fs.OrgName)}
 	clientChannelContext := fs.Sdk.ChannelContext(fs.ChannelID, options...)
 
 	var err error

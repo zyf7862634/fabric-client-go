@@ -31,7 +31,7 @@ func (dc *DbClientSetup) GetClient(channelName string) (*ledger.Client, error) {
 	value, found := dbSetup.DbCache.Get(channelName)
 	if !found {
 		fs := common.GetFabricSetupIns()
-		options := []fabsdk.ContextOption{fabsdk.WithUser(fs.OrgAdmin), fabsdk.WithOrg(fs.OrgName)}
+		options := []fabsdk.ContextOption{fabsdk.WithUser(fs.OrgUser), fabsdk.WithOrg(fs.OrgName)}
 		provider := fs.Sdk.ChannelContext(channelName, options...)
 
 		dbCli, err := ledger.New(provider)

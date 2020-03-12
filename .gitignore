@@ -1,2 +1,6 @@
+#exclude execute file
+fabric-client-go
+
+#exclude dir
 grpc/message_java
 vendor
