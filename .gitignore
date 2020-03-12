@@ -2,5 +2,6 @@
 fabric-client-go
 
 #exclude dir
+.idea
 grpc/message_java
 vendor
