@@ -1,0 +1,6 @@
+#exclude execute file
+httpserver
+*.jar
+
+#exclude dir
+logs
